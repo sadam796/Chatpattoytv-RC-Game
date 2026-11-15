@@ -321,7 +321,7 @@ func _update_suspension_visuals(delta: float = 0.0) -> void:
 		shock.global_transform = Transform3D(orientation, midpoint)
 		shock.scale = Vector3(1.0, length, 1.0)
 		var rings: Array = rig["spring_rings"]
-		var spring_basis := orientation * Basis(Vector3(PI * 0.5, 0.0, 0.0))
+		var spring_basis := orientation * Basis.from_euler(Vector3(PI * 0.5, 0.0, 0.0))
 		# Keep the spring centered on the damper while its visible spacing follows travel.
 		var spring_span := clampf(length * 0.58, 0.16, 0.48)
 		for ring_index in rings.size():
