@@ -4,7 +4,7 @@ const TruckController = preload("res://scripts/truck_controller.gd")
 const MobileHUD = preload("res://scripts/mobile_hud.gd")
 
 var truck: VehicleBody3D
-var hud: CanvasLayer
+var hud
 
 func _ready() -> void:
 	_build_world()
