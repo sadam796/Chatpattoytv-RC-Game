@@ -70,8 +70,8 @@ jobs:
           export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
           export GODOT_ANDROID_KEYSTORE_DEBUG_USER="androiddebugkey"
           export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD="android"
-          Godot_v4.3-stable_linux.x86_64 --headless --editor --path . --quit
-          Godot_v4.3-stable_linux.x86_64 --headless --path . --export-debug "Android" build/Chatpattoytv-RC-Game.apk
+          Godot_v4.3-stable_linux.x86_64 --headless --verbose --editor --path . --quit
+          Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug "Android" build/Chatpattoytv-RC-Game.apk
           test -s build/Chatpattoytv-RC-Game.apk
       - name: Upload installable debug APK
         uses: actions/upload-artifact@v4
