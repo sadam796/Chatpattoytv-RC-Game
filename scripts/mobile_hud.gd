@@ -2,17 +2,18 @@ extends CanvasLayer
 
 signal camera_requested
 signal reset_requested
-signal drive_changed(steer: float, throttle: float, brake_value: float)
+signal drive_changed(steer: float, throttle: float, brake_value: float, reverse_value: float)
 
 var steer_value := 0.0
 var throttle_value := 0.0
 var brake_value := 0.0
+var reverse_value := 0.0
 
 func _ready() -> void:
 	_build_hud()
 
 func _process(_delta: float) -> void:
-	drive_changed.emit(steer_value, throttle_value, brake_value)
+	drive_changed.emit(steer_value, throttle_value, brake_value, reverse_value)
 
 func _build_hud() -> void:
 	var root := Control.new()
@@ -55,6 +56,14 @@ func _build_hud() -> void:
 	brake_button.anchor_bottom = 1.0
 	brake_button.button_down.connect(func(): brake_value = 1.0)
 	brake_button.button_up.connect(func(): brake_value = 0.0)
+
+	var reverse_button := _make_button("REVERSE", Vector2(-112, -196), Vector2(104, 62), root)
+	reverse_button.anchor_left = 1.0
+	reverse_button.anchor_right = 1.0
+	reverse_button.anchor_top = 1.0
+	reverse_button.anchor_bottom = 1.0
+	reverse_button.button_down.connect(func(): reverse_value = 1.0)
+	reverse_button.button_up.connect(func(): reverse_value = 0.0)
 
 	var throttle_button := _make_button("THROTTLE", Vector2(-112, -112), Vector2(104, 76), root)
 	throttle_button.anchor_left = 1.0

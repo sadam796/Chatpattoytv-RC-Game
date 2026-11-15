@@ -7,6 +7,7 @@ const STEER_LIMIT := 0.42
 var touch_steer := 0.0
 var touch_throttle := 0.0
 var touch_brake := 0.0
+var touch_reverse := 0.0
 var camera_mode := 0
 var chase_camera: Camera3D
 var bonnet_camera: Camera3D
@@ -34,14 +35,12 @@ func _physics_process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		throttle = 1.0
 	var brake_input := touch_brake
-	var reverse_input := 0.0
+	var reverse_input := touch_reverse
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
 		if linear_velocity.length() < 1.0:
 			reverse_input = 1.0
 		else:
 			brake_input = 1.0
-	if touch_brake > 0.0 and linear_velocity.length() < 1.0:
-		reverse_input = 1.0
 
 	steering = move_toward(steering, steer_input * STEER_LIMIT, 1.8 * delta)
 	engine_force = throttle * ENGINE_POWER - reverse_input * ENGINE_POWER * 0.62
@@ -63,10 +62,11 @@ func _physics_process(delta: float) -> void:
 var _camera_key_was_down := false
 var _reset_key_was_down := false
 
-func set_touch_controls(steer: float, throttle: float, brake_value: float) -> void:
+func set_touch_controls(steer: float, throttle: float, brake_value: float, reverse_value: float) -> void:
 	touch_steer = clampf(steer, -1.0, 1.0)
 	touch_throttle = clampf(throttle, 0.0, 1.0)
 	touch_brake = clampf(brake_value, 0.0, 1.0)
+	touch_reverse = clampf(reverse_value, 0.0, 1.0)
 
 func toggle_camera() -> void:
 	camera_mode = 1 - camera_mode
@@ -263,7 +263,6 @@ func _build_suspension_details() -> void:
 		spring_mesh.ring_segments = 12
 		spring.mesh = spring_mesh
 		spring.position = shock.position
-		spring.rotation_degrees.z = 90
 		var spring_mat := StandardMaterial3D.new()
 		spring_mat.albedo_color = Color(0.82, 0.34, 0.06)
 		spring_mat.metallic = 0.65
