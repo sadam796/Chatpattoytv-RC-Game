@@ -45,6 +45,57 @@ func _build_world() -> void:
 	_add_rock(Vector3(9, 0.7, 7), Vector3(2.4, 1.4, 1.8))
 	_add_rock(Vector3(-14, 0.6, -24), Vector3(3.0, 1.2, 2.5))
 	_add_trail_marker(Vector3(0, 0.04, -42))
+	# Distant terrain silhouettes and forest edge give the test track a sense of scale.
+	_add_mountain(Vector3(-52, 4, -54), Vector3(24, 18, 16))
+	_add_mountain(Vector3(-18, 2, -68), Vector3(20, 13, 14))
+	_add_mountain(Vector3(28, 5, -62), Vector3(30, 20, 18))
+	_add_mountain(Vector3(66, 3, -34), Vector3(26, 16, 18))
+	for i in 12:
+		var x := -26.0 + float(i) * 4.8
+		_add_tree(Vector3(x, 0, -32.0 - float((i % 3) * 3)))
+	for i in 10:
+		var x := 24.0 + float(i) * 4.0
+		_add_tree(Vector3(x, 0, -18.0 - float((i % 4) * 4)))
+
+func _add_mountain(pos: Vector3, size: Vector3) -> void:
+	var mountain := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radial_segments = 12
+	mesh.rings = 8
+	mountain.mesh = mesh
+	mountain.position = pos
+	mountain.scale = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.19, 0.23, 0.25)
+	mat.roughness = 1.0
+	mountain.material_override = mat
+	add_child(mountain)
+
+func _add_tree(pos: Vector3) -> void:
+	var trunk := MeshInstance3D.new()
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.16
+	trunk_mesh.bottom_radius = 0.25
+	trunk_mesh.height = 2.4
+	trunk.mesh = trunk_mesh
+	trunk.position = pos + Vector3(0, 1.2, 0)
+	var bark := StandardMaterial3D.new()
+	bark.albedo_color = Color(0.16, 0.105, 0.065)
+	bark.roughness = 1.0
+	trunk.material_override = bark
+	add_child(trunk)
+	for tier in 3:
+		var crown := MeshInstance3D.new()
+		var crown_mesh := ConeMesh.new()
+		crown_mesh.bottom_radius = 1.05 - float(tier) * 0.18
+		crown_mesh.height = 1.65
+		crown.mesh = crown_mesh
+		crown.position = pos + Vector3(0, 2.45 + float(tier) * 0.78, 0)
+		var leaves := StandardMaterial3D.new()
+		leaves.albedo_color = Color(0.055 + tier * 0.008, 0.13 + tier * 0.012, 0.075)
+		leaves.roughness = 1.0
+		crown.material_override = leaves
+		add_child(crown)
 
 func _add_ramp(pos: Vector3, size: Vector3, pitch: float) -> void:
 	var body := StaticBody3D.new()
