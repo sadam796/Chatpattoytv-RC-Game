@@ -36,10 +36,17 @@ func _physics_process(delta: float) -> void:
 		throttle = 1.0
 	var brake_input := touch_brake
 	var reverse_input := touch_reverse
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+	var keyboard_reverse := Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)
+	if keyboard_reverse:
+		throttle = 0.0
 		if linear_velocity.length() < 1.0:
 			reverse_input = 1.0
 		else:
+			brake_input = 1.0
+	if reverse_input > 0.0:
+		throttle = 0.0
+		if linear_velocity.length() >= 1.0:
+			reverse_input = 0.0
 			brake_input = 1.0
 
 	steering = move_toward(steering, steer_input * STEER_LIMIT, 1.8 * delta)

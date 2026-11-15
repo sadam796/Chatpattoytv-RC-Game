@@ -8,6 +8,7 @@ var steer_value := 0.0
 var throttle_value := 0.0
 var brake_value := 0.0
 var reverse_value := 0.0
+var speed_label: Label
 
 func _ready() -> void:
 	_build_hud()
@@ -26,6 +27,13 @@ func _build_hud() -> void:
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
 	root.add_child(title)
+
+	speed_label = Label.new()
+	speed_label.text = "SPEED  0 KM/H"
+	speed_label.position = Vector2(24, 48)
+	speed_label.add_theme_font_size_override("font_size", 24)
+	speed_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.22, 1.0))
+	root.add_child(speed_label)
 
 	var camera_button := _make_button("CAM", Vector2(-118, 24), Vector2(92, 48), root)
 	camera_button.anchor_left = 1.0
@@ -72,6 +80,10 @@ func _build_hud() -> void:
 	throttle_button.anchor_bottom = 1.0
 	throttle_button.button_down.connect(func(): throttle_value = 1.0)
 	throttle_button.button_up.connect(func(): throttle_value = 0.0)
+
+func set_vehicle_speed(speed_mps: float) -> void:
+	if is_instance_valid(speed_label):
+		speed_label.text = "SPEED  %03d KM/H" % int(round(speed_mps * 3.6))
 
 func _make_button(caption: String, offset: Vector2, button_size: Vector2, parent: Control) -> Button:
 	var button := Button.new()

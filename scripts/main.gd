@@ -4,6 +4,7 @@ const TruckController = preload("res://scripts/truck_controller.gd")
 const MobileHUD = preload("res://scripts/mobile_hud.gd")
 
 var truck: VehicleBody3D
+var hud: CanvasLayer
 
 func _ready() -> void:
 	_build_world()
@@ -11,12 +12,16 @@ func _ready() -> void:
 	truck.name = "RC_Monster_Truck"
 	add_child(truck)
 	truck.global_position = Vector3(0.0, 2.0, 0.0)
-	var hud = MobileHUD.new()
+	hud = MobileHUD.new()
 	add_child(hud)
 	hud.camera_requested.connect(truck.toggle_camera)
 	hud.reset_requested.connect(truck.reset_vehicle)
 	hud.drive_changed.connect(truck.set_touch_controls)
 	_setup_environment()
+
+func _process(_delta: float) -> void:
+	if is_instance_valid(truck) and is_instance_valid(hud):
+		hud.set_vehicle_speed(truck.linear_velocity.length())
 
 func _build_world() -> void:
 	var ground_body := StaticBody3D.new()
