@@ -26,6 +26,12 @@ Android-first realistic 3D RC monster-truck simulator built with Godot 4.
 Touch: steering left/right, throttle, reverse, brake, camera toggle, reset.
 Keyboard: W/up throttle, S/down brake (reverse when nearly stopped), A/D or arrows steer, C camera, R reset.
 
+## Android debug APK build
+- The repository includes an Android export preset targeting 64-bit ARM devices.
+- GitHub Actions builds a **debug/testing APK** and uploads it as a workflow artifact; it is not a Play Store release.
+- Open the Android debug workflow in the Actions tab, open the latest successful run, and download the `Chatpattoytv-RC-Game-Android-debug` artifact.
+- The APK uses a temporary CI debug signing key. A separate private release keystore and release configuration will be needed before Play Store publishing.
+
 ## Automated validation
 GitHub Actions runs a headless Godot 4.3 project import/script check and launches the main scene briefly on pushes and pull requests. A green workflow is a basic engine validation only; it does not replace real Android device, driving-physics, graphics or performance testing.
 
