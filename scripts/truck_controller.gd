@@ -56,7 +56,7 @@ func _physics_process(delta: float) -> void:
 	# All four wheels are configured as driven wheels (4WD).
 	engine_force = throttle * ENGINE_POWER - reverse_input * ENGINE_POWER * 0.62
 	brake = brake_input * BRAKE_POWER
-	_update_suspension_visuals()
+	_update_suspension_visuals(delta)
 
 	if Input.is_key_pressed(KEY_C):
 		if not _camera_key_was_down:
@@ -292,20 +292,26 @@ func _build_suspension_details() -> void:
 			_suspension_rigs.append({
 				"wheel": wheel,
 				"anchor_local": anchor_local,
+				"visual_lower": wheel.global_position,
 				"shock": shock,
 				"spring_rings": spring_rings
 			})
 	_update_suspension_visuals()
 
-func _update_suspension_visuals() -> void:
+func _update_suspension_visuals(delta: float = 0.0) -> void:
+	# Smooth the visual damper endpoint to avoid contact-point jitter on rough ground.
+	var follow_weight := 1.0 if delta <= 0.0 else 1.0 - exp(-delta * 22.0)
 	for rig in _suspension_rigs:
 		var wheel: VehicleWheel3D = rig["wheel"]
 		if not is_instance_valid(wheel):
 			continue
 		var upper: Vector3 = to_global(rig["anchor_local"])
-		var lower: Vector3 = wheel.global_position
+		var target_lower: Vector3 = wheel.global_position
 		if wheel.is_in_contact():
-			lower = wheel.get_contact_point() + wheel.get_contact_normal() * wheel.wheel_radius
+			target_lower = wheel.get_contact_point() + wheel.get_contact_normal() * wheel.wheel_radius
+		var lower: Vector3 = rig["visual_lower"]
+		lower = lower.lerp(target_lower, follow_weight)
+		rig["visual_lower"] = lower
 		var axis := lower - upper
 		var length := maxf(axis.length(), 0.12)
 		var direction := axis / length
@@ -316,9 +322,12 @@ func _update_suspension_visuals() -> void:
 		shock.scale = Vector3(1.0, length, 1.0)
 		var rings: Array = rig["spring_rings"]
 		var spring_basis := orientation * Basis(Vector3(PI * 0.5, 0.0, 0.0))
+		# Keep the spring centered on the damper while its visible spacing follows travel.
+		var spring_span := clampf(length * 0.58, 0.16, 0.48)
 		for ring_index in rings.size():
 			var spring: MeshInstance3D = rings[ring_index]
-			var along := 0.22 + 0.56 * (float(ring_index) / maxf(float(rings.size() - 1), 1.0))
+			var fraction := float(ring_index) / maxf(float(rings.size() - 1), 1.0)
+			var along := 0.5 - spring_span * 0.5 + spring_span * fraction
 			spring.global_transform = Transform3D(spring_basis, upper.lerp(lower, along))
 
 func _build_cameras() -> void:
