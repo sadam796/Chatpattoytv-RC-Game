@@ -23,8 +23,8 @@ Android-first realistic 3D RC monster-truck simulator built with Godot 4.
 4. To build Android, install Godot Android export templates and configure an Android export preset.
 
 ## Controls
-Touch: steering left/right, throttle, brake, camera toggle, reset.
-Keyboard: W/up throttle, S/down brake, A/D or arrows steer, C camera, R reset.
+Touch: steering left/right, throttle, reverse, brake, camera toggle, reset.
+Keyboard: W/up throttle, S/down brake (reverse when nearly stopped), A/D or arrows steer, C camera, R reset.
 
 ## Development status
-This is the initial playable foundation, not a finished commercial game. The current generated truck and test environment are blockout geometry. High-detail authored vehicle/environment art, advanced tyre-ground interaction, deformation, mud/water simulation, garage, upgrades, missions, audio, performance tuning and a signed Android APK are not yet complete. Do not treat this project as release-ready until it is tested in Godot and on Android devices.
+This is the initial playable foundation, not a finished commercial game. The current generated truck has a more detailed procedural body shell, fenders, glass, grille, wheel hubs, tread blocks and visible suspension props; the environment includes a dirt test arena, ramps, rocks, distant mountain forms and a forest edge. These are still procedural prototype assets, not final authored high-detail art. High-detail authored vehicle/environment art, advanced tyre-ground interaction, deformation, mud/water simulation, garage, upgrades, missions, audio, performance tuning and a signed Android APK are not yet complete. Do not treat this project as release-ready until it is tested in Godot and on Android devices.
