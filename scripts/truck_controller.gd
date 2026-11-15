@@ -49,7 +49,11 @@ func _physics_process(delta: float) -> void:
 			reverse_input = 0.0
 			brake_input = 1.0
 
-	steering = move_toward(steering, steer_input * STEER_LIMIT, 1.8 * delta)
+	# Reduce steering lock as speed rises to keep the heavy truck stable.
+	var speed_mps := linear_velocity.length()
+	var speed_steer_limit := lerpf(STEER_LIMIT, 0.19, clampf(speed_mps / 22.0, 0.0, 1.0))
+	steering = move_toward(steering, steer_input * speed_steer_limit, 1.8 * delta)
+	# All four wheels are configured as driven wheels (4WD).
 	engine_force = throttle * ENGINE_POWER - reverse_input * ENGINE_POWER * 0.62
 	brake = brake_input * BRAKE_POWER
 
@@ -172,13 +176,13 @@ func _build_wheels() -> void:
 			wheel.use_as_steering = axle == 0
 			wheel.use_as_traction = true
 			wheel.wheel_radius = 0.58
-			wheel.wheel_rest_length = 0.24
-			wheel.suspension_travel = 0.30
-			wheel.suspension_stiffness = 24.0
-			wheel.damping_compression = 0.55
-			wheel.damping_relaxation = 0.72
-			wheel.wheel_friction_slip = 4.2
-			wheel.wheel_roll_influence = 0.12
+			wheel.wheel_rest_length = 0.25
+			wheel.suspension_travel = 0.34
+			wheel.suspension_stiffness = 28.0
+			wheel.damping_compression = 0.48
+			wheel.damping_relaxation = 0.66
+			wheel.wheel_friction_slip = 5.0
+			wheel.wheel_roll_influence = 0.08
 			add_child(wheel)
 			_add_wheel_visual(wheel)
 

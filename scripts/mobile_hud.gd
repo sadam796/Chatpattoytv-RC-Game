@@ -35,6 +35,13 @@ func _build_hud() -> void:
 	speed_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.22, 1.0))
 	root.add_child(speed_label)
 
+	var drivetrain_label := Label.new()
+	drivetrain_label.text = "4WD  /  FOUR-WHEEL DRIVE"
+	drivetrain_label.position = Vector2(26, 78)
+	drivetrain_label.add_theme_font_size_override("font_size", 13)
+	drivetrain_label.add_theme_color_override("font_color", Color(0.72, 0.84, 0.88, 0.92))
+	root.add_child(drivetrain_label)
+
 	var camera_button := _make_button("CAM", Vector2(-118, 24), Vector2(92, 48), root)
 	camera_button.anchor_left = 1.0
 	camera_button.anchor_right = 1.0
