@@ -289,12 +289,39 @@ func _build_suspension_details() -> void:
 				spring.material_override = spring_mat
 				add_child(spring)
 				spring_rings.append(spring)
+			# Twin articulated lower links make the wheel travel readable against the chassis.
+			var control_links: Array[MeshInstance3D] = []
+			for link_index in 2:
+				var link := MeshInstance3D.new()
+				link.name = "ControlLink_%s_%d" % [wheel_name, link_index]
+				var link_mesh := CylinderMesh.new()
+				link_mesh.top_radius = 0.038
+				link_mesh.bottom_radius = 0.038
+				link_mesh.height = 1.0
+				link_mesh.radial_segments = 10
+				link.mesh = link_mesh
+				var link_mat := StandardMaterial3D.new()
+				link_mat.albedo_color = Color(0.10, 0.12, 0.14)
+				link_mat.metallic = 0.72
+				link_mat.roughness = 0.34
+				link.material_override = link_mat
+				add_child(link)
+				control_links.append(link)
 			_suspension_rigs.append({
 				"wheel": wheel,
 				"anchor_local": anchor_local,
 				"visual_lower": wheel.global_position,
 				"shock": shock,
-				"spring_rings": spring_rings
+				"spring_rings": spring_rings,
+				"control_links": control_links,
+				"link_anchor_offsets": [
+					Vector3(side * 0.60, -0.02, (-0.72 if axle == 0 else 0.76) - 0.25),
+					Vector3(side * 0.60, -0.02, (-0.72 if axle == 0 else 0.76) + 0.25)
+				],
+				"link_wheel_offsets": [
+					Vector3(side * 0.22, -0.08, -0.18),
+					Vector3(side * 0.22, -0.08, 0.18)
+				]
 			})
 	_update_suspension_visuals()
 
@@ -329,6 +356,20 @@ func _update_suspension_visuals(delta: float = 0.0) -> void:
 			var fraction := float(ring_index) / maxf(float(rings.size() - 1), 1.0)
 			var along := 0.5 - spring_span * 0.5 + spring_span * fraction
 			spring.global_transform = Transform3D(spring_basis, upper.lerp(lower, along))
+		# Articulated links follow steering and suspension movement every physics frame.
+		var control_links: Array = rig["control_links"]
+		var anchor_offsets: Array = rig["link_anchor_offsets"]
+		var wheel_offsets: Array = rig["link_wheel_offsets"]
+		for link_index in control_links.size():
+			var link_start: Vector3 = to_global(anchor_offsets[link_index])
+			var link_end: Vector3 = wheel.global_transform * wheel_offsets[link_index]
+			var link_axis := link_end - link_start
+			var link_length := maxf(link_axis.length(), 0.05)
+			var link_basis := Basis(Quaternion(Vector3.UP, link_axis / link_length))
+			var link: MeshInstance3D = control_links[link_index]
+			link.global_transform = Transform3D(link_basis, (link_start + link_end) * 0.5)
+			link.scale = Vector3.ONE
+			link.scale.y = link_length
 
 func _build_cameras() -> void:
 	chase_camera = Camera3D.new()
