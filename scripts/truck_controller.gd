@@ -56,6 +56,7 @@ func _physics_process(delta: float) -> void:
 	# All four wheels are configured as driven wheels (4WD).
 	engine_force = throttle * ENGINE_POWER - reverse_input * ENGINE_POWER * 0.62
 	brake = brake_input * BRAKE_POWER
+	_update_suspension_visuals()
 
 	if Input.is_key_pressed(KEY_C):
 		if not _camera_key_was_down:
@@ -247,39 +248,78 @@ func _add_wheel_visual(wheel: VehicleWheel3D) -> void:
 		lug.material_override = lug_mat
 		wheel.add_child(lug)
 
+var _suspension_rigs: Array[Dictionary] = []
+
 func _build_suspension_details() -> void:
-	# Visible long-travel dampers mounted near each wheel.
+	# Each damper is mounted to the chassis and follows its wheel's live ground contact.
 	for axle in 2:
 		for side in [-1.0, 1.0]:
+			var wheel_name := ("Front" if axle == 0 else "Rear") + ("Left" if side < 0 else "Right")
+			var wheel: VehicleWheel3D = get_node_or_null(wheel_name)
+			if wheel == null:
+				continue
+			var anchor_local := Vector3(side * 0.70, 0.30, -0.72 if axle == 0 else 0.76)
 			var shock := MeshInstance3D.new()
-			shock.name = "Shock_%d_%s" % [axle, side]
+			shock.name = "LiveShock_%s" % wheel_name
 			var shock_mesh := CylinderMesh.new()
-			shock_mesh.top_radius = 0.055
-			shock_mesh.bottom_radius = 0.055
-			shock_mesh.height = 0.58
-		shock.mesh = shock_mesh
-		shock.position = Vector3(side * 0.70, 0.02, -0.72 if axle == 0 else 0.76)
-		shock.rotation_degrees.z = side * -12.0
-		var shock_mat := StandardMaterial3D.new()
-		shock_mat.albedo_color = Color(0.72, 0.75, 0.77)
-		shock_mat.metallic = 0.88
-		shock_mat.roughness = 0.22
-		shock.material_override = shock_mat
-		add_child(shock)
-		var spring := MeshInstance3D.new()
-		var spring_mesh := TorusMesh.new()
-		spring_mesh.inner_radius = 0.065
-		spring_mesh.outer_radius = 0.105
-		spring_mesh.rings = 8
-		spring_mesh.ring_segments = 12
-		spring.mesh = spring_mesh
-		spring.position = shock.position
-		var spring_mat := StandardMaterial3D.new()
-		spring_mat.albedo_color = Color(0.82, 0.34, 0.06)
-		spring_mat.metallic = 0.65
-		spring_mat.roughness = 0.3
-		spring.material_override = spring_mat
-		add_child(spring)
+			shock_mesh.top_radius = 0.052
+			shock_mesh.bottom_radius = 0.052
+			shock_mesh.height = 1.0
+			shock.mesh = shock_mesh
+			var shock_mat := StandardMaterial3D.new()
+			shock_mat.albedo_color = Color(0.72, 0.75, 0.77)
+			shock_mat.metallic = 0.88
+			shock_mat.roughness = 0.22
+			shock.material_override = shock_mat
+			add_child(shock)
+			var spring_rings: Array[MeshInstance3D] = []
+			var spring_mat := StandardMaterial3D.new()
+			spring_mat.albedo_color = Color(0.82, 0.34, 0.06)
+			spring_mat.metallic = 0.65
+			spring_mat.roughness = 0.3
+			for ring_index in 7:
+				var spring := MeshInstance3D.new()
+				spring.name = "Spring_%s_%d" % [wheel_name, ring_index]
+				var spring_mesh := TorusMesh.new()
+				spring_mesh.inner_radius = 0.060
+				spring_mesh.outer_radius = 0.092
+				spring_mesh.rings = 8
+				spring_mesh.ring_segments = 12
+				spring.mesh = spring_mesh
+				spring.material_override = spring_mat
+				add_child(spring)
+				spring_rings.append(spring)
+			_suspension_rigs.append({
+				"wheel": wheel,
+				"anchor_local": anchor_local,
+				"shock": shock,
+				"spring_rings": spring_rings
+			})
+	_update_suspension_visuals()
+
+func _update_suspension_visuals() -> void:
+	for rig in _suspension_rigs:
+		var wheel: VehicleWheel3D = rig["wheel"]
+		if not is_instance_valid(wheel):
+			continue
+		var upper: Vector3 = to_global(rig["anchor_local"])
+		var lower: Vector3 = wheel.global_position
+		if wheel.is_in_contact():
+			lower = wheel.get_contact_point() + wheel.get_contact_normal() * wheel.wheel_radius
+		var axis := lower - upper
+		var length := maxf(axis.length(), 0.12)
+		var direction := axis / length
+		var orientation := Basis(Quaternion(Vector3.UP, direction))
+		var midpoint := (upper + lower) * 0.5
+		var shock: MeshInstance3D = rig["shock"]
+		shock.global_transform = Transform3D(orientation, midpoint)
+		shock.scale = Vector3(1.0, length, 1.0)
+		var rings: Array = rig["spring_rings"]
+		var spring_basis := orientation * Basis(Vector3(PI * 0.5, 0.0, 0.0))
+		for ring_index in rings.size():
+			var spring: MeshInstance3D = rings[ring_index]
+			var along := 0.22 + 0.56 * (float(ring_index) / maxf(float(rings.size() - 1), 1.0))
+			spring.global_transform = Transform3D(spring_basis, upper.lerp(lower, along))
 
 func _build_cameras() -> void:
 	chase_camera = Camera3D.new()
