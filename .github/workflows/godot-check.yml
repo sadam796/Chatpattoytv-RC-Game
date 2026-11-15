@@ -1,0 +1,31 @@
+name: Godot project check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out game repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.3
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          curl -L --fail --retry 3 -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q godot.zip -d godot-bin
+          chmod +x godot-bin/Godot_v4.3-stable_linux.x86_64
+          echo "$PWD/godot-bin" >> "$GITHUB_PATH"
+
+      - name: Import project and check scripts
+        run: Godot_v4.3-stable_linux.x86_64 --headless --editor --path . --quit
+
+      - name: Launch main scene headlessly
+        run: Godot_v4.3-stable_linux.x86_64 --headless --path . --quit-after 5
