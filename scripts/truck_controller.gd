@@ -34,11 +34,17 @@ func _physics_process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		throttle = 1.0
 	var brake_input := touch_brake
+	var reverse_input := 0.0
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
-		brake_input = 1.0
+		if linear_velocity.length() < 1.0:
+			reverse_input = 1.0
+		else:
+			brake_input = 1.0
+	if touch_brake > 0.0 and linear_velocity.length() < 1.0:
+		reverse_input = 1.0
 
 	steering = move_toward(steering, steer_input * STEER_LIMIT, 1.8 * delta)
-	engine_force = throttle * ENGINE_POWER
+	engine_force = throttle * ENGINE_POWER - reverse_input * ENGINE_POWER * 0.62
 	brake = brake_input * BRAKE_POWER
 
 	if Input.is_key_pressed(KEY_C):
@@ -269,7 +275,7 @@ func _build_cameras() -> void:
 	chase_camera = Camera3D.new()
 	chase_camera.name = "ThirdPersonCamera"
 	chase_camera.position = Vector3(0, 3.2, 6.8)
-	chase_camera.rotation_degrees = Vector3(-15, 180, 0)
+	chase_camera.rotation_degrees = Vector3(-15, 0, 0)
 	chase_camera.current = true
 	chase_camera.fov = 72
 	add_child(chase_camera)
@@ -277,7 +283,7 @@ func _build_cameras() -> void:
 	bonnet_camera = Camera3D.new()
 	bonnet_camera.name = "BonnetCamera"
 	bonnet_camera.position = Vector3(0, 1.0, -0.62)
-	bonnet_camera.rotation_degrees = Vector3(-4, 180, 0)
+	bonnet_camera.rotation_degrees = Vector3(-4, 0, 0)
 	bonnet_camera.current = false
 	bonnet_camera.fov = 82
 	add_child(bonnet_camera)
