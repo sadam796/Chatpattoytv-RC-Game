@@ -18,6 +18,7 @@ func _ready() -> void:
 	center_of_mass = Vector3(0, -0.28, 0.02)
 	_build_body()
 	_build_wheels()
+	_build_suspension_details()
 	_build_cameras()
 	_make_truck_lights()
 
@@ -116,6 +117,39 @@ func _build_body() -> void:
 	bumper.material_override = bumper_mat
 	add_child(bumper)
 
+	# Detailed RC shell: hood, fenders, glass, grille, roll cage and side protection.
+	_add_box_part("Hood", Vector3(1.34, 0.13, 0.72), Vector3(0, 0.58, -0.60), Color(0.86, 0.16, 0.075), 0.30)
+	_add_box_part("RearDeck", Vector3(1.34, 0.12, 0.52), Vector3(0, 0.56, 0.78), Color(0.68, 0.09, 0.045), 0.34)
+	_add_box_part("FrontGrille", Vector3(0.76, 0.24, 0.045), Vector3(0, 0.31, -1.19), Color(0.018, 0.024, 0.03), 0.55)
+	for i in 4:
+		_add_box_part("GrilleSlat_%d" % i, Vector3(0.68, 0.018, 0.018), Vector3(0, 0.23 + i * 0.052, -1.218), Color(0.42, 0.46, 0.48), 0.65)
+	for side in [-1.0, 1.0]:
+		_add_box_part("FrontFender_%s" % side, Vector3(0.34, 0.16, 0.94), Vector3(side * 0.91, 0.42, -0.72), Color(0.09, 0.105, 0.12), 0.42)
+		_add_box_part("RearFender_%s" % side, Vector3(0.34, 0.16, 0.94), Vector3(side * 0.91, 0.42, 0.76), Color(0.09, 0.105, 0.12), 0.42)
+		_add_box_part("SideRail_%s" % side, Vector3(0.10, 0.14, 1.52), Vector3(side * 0.86, 0.06, 0.04), Color(0.035, 0.045, 0.052), 0.62)
+		_add_box_part("SideWindow_%s" % side, Vector3(0.035, 0.28, 0.58), Vector3(side * 0.63, 0.76, 0.12), Color(0.035, 0.12, 0.17), 0.18)
+		_add_box_part("Headlight_%s" % side, Vector3(0.24, 0.14, 0.055), Vector3(side * 0.53, 0.43, -1.19), Color(0.92, 0.82, 0.57), 0.18)
+		_add_box_part("RoofRail_%s" % side, Vector3(0.075, 0.07, 0.92), Vector3(side * 0.60, 1.00, 0.10), Color(0.035, 0.045, 0.052), 0.55)
+	_add_box_part("Windshield", Vector3(1.08, 0.30, 0.035), Vector3(0, 0.79, -0.39), Color(0.035, 0.12, 0.17), 0.16, Vector3(-18, 0, 0))
+	_add_box_part("RearWindow", Vector3(1.02, 0.27, 0.035), Vector3(0, 0.79, 0.59), Color(0.035, 0.12, 0.17), 0.16, Vector3(18, 0, 0))
+	for i in 3:
+		_add_box_part("HoodVent_%d" % i, Vector3(0.10, 0.025, 0.30), Vector3(-0.25 + i * 0.25, 0.66, -0.60), Color(0.035, 0.04, 0.045), 0.7)
+
+func _add_box_part(part_name: String, dimensions: Vector3, local_pos: Vector3, tint: Color, metal: float, rotation_deg: Vector3 = Vector3.ZERO) -> void:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	part.mesh = mesh
+	part.position = local_pos
+	part.rotation_degrees = rotation_deg
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tint
+	mat.metallic = metal
+	mat.roughness = 0.34 if metal > 0.2 else 0.55
+	part.material_override = mat
+	add_child(part)
+
 func _build_wheels() -> void:
 	for axle in 2:
 		for side in [-1.0, 1.0]:
@@ -149,6 +183,87 @@ func _add_wheel_visual(wheel: VehicleWheel3D) -> void:
 	tyre_mat.roughness = 0.96
 	tyre.material_override = tyre_mat
 	wheel.add_child(tyre)
+
+	# Deep beadlock-style rim and central hub.
+	var rim := MeshInstance3D.new()
+	var rim_mesh := CylinderMesh.new()
+	rim_mesh.top_radius = 0.31
+	rim_mesh.bottom_radius = 0.31
+	rim_mesh.height = 0.385
+	rim_mesh.radial_segments = 24
+	rim.mesh = rim_mesh
+	rim.rotation_degrees.z = 90
+	var rim_mat := StandardMaterial3D.new()
+	rim_mat.albedo_color = Color(0.12, 0.15, 0.17)
+	rim_mat.metallic = 0.82
+	rim_mat.roughness = 0.28
+	rim.material_override = rim_mat
+	wheel.add_child(rim)
+
+	var hub := MeshInstance3D.new()
+	var hub_mesh := CylinderMesh.new()
+	hub_mesh.top_radius = 0.12
+	hub_mesh.bottom_radius = 0.12
+	hub_mesh.height = 0.405
+	hub_mesh.radial_segments = 16
+	hub.mesh = hub_mesh
+	hub.rotation_degrees.z = 90
+	var hub_mat := StandardMaterial3D.new()
+	hub_mat.albedo_color = Color(0.78, 0.42, 0.08)
+	hub_mat.metallic = 0.72
+	hub_mat.roughness = 0.26
+	hub.material_override = hub_mat
+	wheel.add_child(hub)
+
+	# Chunky tread blocks around the tyre circumference.
+	for tread_index in 12:
+		var lug := MeshInstance3D.new()
+		var lug_mesh := BoxMesh.new()
+		lug_mesh.size = Vector3(0.39, 0.12, 0.105)
+		lug.mesh = lug_mesh
+		var angle := TAU * float(tread_index) / 12.0
+		lug.position = Vector3(0, sin(angle) * 0.555, cos(angle) * 0.555)
+		lug.rotation.x = angle
+		var lug_mat := StandardMaterial3D.new()
+		lug_mat.albedo_color = Color(0.045, 0.05, 0.052)
+		lug_mat.roughness = 1.0
+		lug.material_override = lug_mat
+		wheel.add_child(lug)
+
+func _build_suspension_details() -> void:
+	# Visible long-travel dampers mounted near each wheel.
+	for axle in 2:
+		for side in [-1.0, 1.0]:
+			var shock := MeshInstance3D.new()
+			shock.name = "Shock_%d_%s" % [axle, side]
+			var shock_mesh := CylinderMesh.new()
+			shock_mesh.top_radius = 0.055
+			shock_mesh.bottom_radius = 0.055
+			shock_mesh.height = 0.58
+		shock.mesh = shock_mesh
+		shock.position = Vector3(side * 0.70, 0.02, -0.72 if axle == 0 else 0.76)
+		shock.rotation_degrees.z = side * -12.0
+		var shock_mat := StandardMaterial3D.new()
+		shock_mat.albedo_color = Color(0.72, 0.75, 0.77)
+		shock_mat.metallic = 0.88
+		shock_mat.roughness = 0.22
+		shock.material_override = shock_mat
+		add_child(shock)
+		var spring := MeshInstance3D.new()
+		var spring_mesh := TorusMesh.new()
+		spring_mesh.inner_radius = 0.065
+		spring_mesh.outer_radius = 0.105
+		spring_mesh.rings = 8
+		spring_mesh.ring_segments = 12
+		spring.mesh = spring_mesh
+		spring.position = shock.position
+		spring.rotation_degrees.z = 90
+		var spring_mat := StandardMaterial3D.new()
+		spring_mat.albedo_color = Color(0.82, 0.34, 0.06)
+		spring_mat.metallic = 0.65
+		spring_mat.roughness = 0.3
+		spring.material_override = spring_mat
+		add_child(spring)
 
 func _build_cameras() -> void:
 	chase_camera = Camera3D.new()
